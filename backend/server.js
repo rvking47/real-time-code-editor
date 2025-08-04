@@ -11,7 +11,7 @@ const app=express();
 
 const server=http.createServer(app);
 
-const url = `https://real-time-code-editor-zenc.onrender.com`;
+ const url = `https://real-time-code-editor-zenc.onrender.com`;
 const interval = 30000;
 
 function reloadWebsite() {
@@ -47,28 +47,35 @@ io.on("connection",(socket)=>{
             if(currentRoom)
             {
                 socket.leave(currentRoom)
-                rooms.get(currentRoom).delete(currentUser)
-                io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)))
+                rooms.get(currentRoom).users.delete(currentUser)
+                io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom).users))
             }
             currentRoom=roomId;
             currentUser=userName;
       
             socket.join(roomId)
             if(!rooms.has(roomId)){
-                rooms.set(roomId, new Set());
+                rooms.set(roomId,{users: new Set(), code:"// Start code here"});
             }
-            rooms.get(roomId).add(userName);
-            io.to(roomId).emit("userJoined", Array.from(rooms.get(currentRoom)))
+            rooms.get(roomId).users.add(userName);
+            socket.emit("codeUpdate", rooms.get(roomId).code.language);
+
+            io.to(roomId).emit("userJoined", Array.from(rooms.get(currentRoom).users))
     });
     
     socket.on("codeChange",({roomId, code})=>{
+        if(rooms.has(roomId))
+        {
+          rooms.get(roomId).code=code;
+        }
+
         socket.to(roomId).emit("codeUpdate",code);
     });
 
     socket.on("leaveRoom",()=>{
            if(currentRoom && currentUser){
-            rooms.get(currentRoom).delete(currentUser);
-            io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)))
+            rooms.get(currentRoom).users.delete(currentUser);
+            io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom).users))
 
             socket.leave(currentRoom);
             currentRoom=null;
@@ -81,10 +88,11 @@ io.on("connection",(socket)=>{
     })
 
     socket.on("languageChange",({roomId, language})=>{
+
         io.to(roomId).emit("languageUpadte", language );
     });
 
-  socket.on("compileCode", async ({ code, roomId, language, version }) => {
+  socket.on("compileCode", async ({ code, roomId, language, version, input }) => {
   try {
     if (rooms.has(roomId)) {
       const room = rooms.get(roomId);
@@ -97,7 +105,8 @@ io.on("connection",(socket)=>{
             name: `main.${getFileExtension(language)}`,
             content: code
           }
-        ]
+        ],
+        stdin:input,
       });
 
       const output = response.data.run?.output || "No output received";
@@ -119,8 +128,8 @@ io.on("connection",(socket)=>{
 
     socket.on("disconnect",()=>{
         if(currentRoom && currentUser){
-            rooms.get(currentRoom).delete(currentUser);
-            io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)))
+            rooms.get(currentRoom).users.delete(currentUser);
+            io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom).users))
         }
         console.log("user discounected");
     })

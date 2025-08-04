@@ -4,7 +4,7 @@ import io from "socket.io-client"
 import { useState } from 'react';
 import { Editor } from "@monaco-editor/react";
 import { FaCopy, FaUsers, FaSignOutAlt, FaKeyboard } from 'react-icons/fa';
-
+import {v4 as uuid} from "uuid";
 
 const socket=io("https://real-time-code-editor-zenc.onrender.com");
 
@@ -19,6 +19,7 @@ const App = () => {
   const [typing, setTyping]=useState("");
   const [outPut, setOutput]= useState("");
   const [version, setVersion]=useState("*");
+  const [userInput, setuserInput]= useState("");
 
   useEffect(()=>{
     socket.on("userJoined",(users)=>{
@@ -101,7 +102,12 @@ setlanguage("javascript");
 }
 
 const runCode=()=>{
- socket.emit("compileCode", { code, roomId, language, version });
+ socket.emit("compileCode", { code, roomId, language, version, input : userInput});
+}
+
+const createRoomId=()=>{
+  const roomId=uuid();
+  setRoomId(roomId);
 }
 
   if(!join)
@@ -118,6 +124,7 @@ const runCode=()=>{
         value={roomId}
         onChange={(e) => setRoomId(e.target.value)}
       />
+      <button style={{marginBottom:"14px"}} onClick={createRoomId}>Auto Create Id</button>
       <input
         type="text"
         placeholder="User Name"
@@ -182,6 +189,7 @@ const runCode=()=>{
         fontSize: 14,
       }}
     />
+    <textarea className='input-console' value={userInput} onChange={(e)=>setuserInput(e.target.value)} placeholder='Enter input here..'  />
     <button className='run-btn' onClick={runCode}>Execute</button>
     <textarea className='output-console' value={outPut} readOnly placeholder='Output will appear herer ...'/>
   </div>
