@@ -43,7 +43,7 @@ io.on("connection",(socket)=>{
                 rooms.set(roomId,{users: new Set(), code:"// Start code here"});
             }
             rooms.get(roomId).users.add(userName);
-            socket.emit("codeUpdate", rooms.get(roomId).code.language);
+            socket.emit("codeUpdate", rooms.get(roomId).code);
 
             io.to(roomId).emit("userJoined", Array.from(rooms.get(currentRoom).users))
     });
@@ -73,7 +73,6 @@ io.on("connection",(socket)=>{
     })
 
     socket.on("languageChange",({roomId, language})=>{
-
         io.to(roomId).emit("languageUpadte", language );
     });
 

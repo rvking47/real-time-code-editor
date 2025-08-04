@@ -6,7 +6,7 @@ import { Editor } from "@monaco-editor/react";
 import { FaCopy, FaUsers, FaSignOutAlt, FaKeyboard } from 'react-icons/fa';
 import {v4 as uuid} from "uuid";
 
-const socket=io("https://real-time-code-editor-zenc.onrender.com");
+const socket=io("http://localhost:5000");
 
 const App = () => {
   const [join, setjoin]= useState(false);
